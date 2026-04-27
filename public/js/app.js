@@ -1,0 +1,1 @@
+console.log('Pagina ca(r)gado');

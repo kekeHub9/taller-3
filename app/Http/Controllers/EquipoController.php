@@ -45,14 +45,12 @@ class EquipoController extends Controller
         return view('equipos.index', compact('equipos', 'equiposCriticos'));
     }
 
-    // API: Obtener todos los equipos (para AJAX)
     public function getEquipos()
     {
         $equipos = Equipo::orderBy('created_at', 'desc')->get();
         return response()->json($equipos);
     }
 
-    // API: Obtener un equipo específico
     public function getEquipo($id)
     {
         $equipo = Equipo::findOrFail($id);
@@ -64,7 +62,6 @@ class EquipoController extends Controller
         return view('equipos.create');
     }
 
-    // Store con soporte AJAX
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -73,28 +70,17 @@ class EquipoController extends Controller
             'tipo' => 'required',
             'marca' => 'nullable|max:100',
             'modelo' => 'nullable|max:100',
-            'fecha_adquisicion' => 'nullable|date',
+            'fecha_compra' => 'nullable|date',
             'proveedor' => 'nullable|max:255',
             'costo' => 'nullable|numeric|min:0',
             'departamento' => 'required',
             'estado' => 'required',
             'ultima_calibracion' => 'nullable|date',
-            'proxima_calibracion' => 'nullable|date|after_or_equal:ultima_calibracion',
+            'proxima_calibracion' => 'nullable|date',
+            'vida_util' => 'nullable|integer',
         ]);
         
-        // Calcular depreciación si hay costo y fecha aun no se usa pero
-        if ($request->costo && $request->fecha_adquisicion && $request->vida_util ?? false) {
-            $anosTranscurridos = now()->diffInYears($request->fecha_adquisicion);
-            $depreciacionAnual = $request->costo / $request->vida_util;
-            $depreciacionTotal = min($depreciacionAnual * $anosTranscurridos, $request->costo);
-            $validated['depreciacion'] = $depreciacionTotal;
-        }
-        
         $equipo = Equipo::create($validated);
-        
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'equipo' => $equipo, 'message' => 'Equipo creado exitosamente']);
-        }
         
         return redirect()->route('equipos.index')
             ->with('success', 'Equipo registrado exitosamente');
@@ -117,16 +103,10 @@ class EquipoController extends Controller
 
     public function edit($id)
     {
-      $equipo = Equipo::findOrFail($id);
-    
-        if (request()->ajax()) {
-        return response()->json($equipo);
-        }   
-    
+        $equipo = Equipo::findOrFail($id);
         return view('equipos.edit', compact('equipo'));
     }
 
-    // Update con soporte AJAX
     public function update(Request $request, $id)
     {
         $equipo = Equipo::findOrFail($id);
@@ -137,34 +117,26 @@ class EquipoController extends Controller
             'tipo' => 'required',
             'marca' => 'nullable|max:100',
             'modelo' => 'nullable|max:100',
-            'fecha_adquisicion' => 'nullable|date',
+            'fecha_compra' => 'nullable|date',
             'proveedor' => 'nullable|max:255',
             'costo' => 'nullable|numeric|min:0',
             'departamento' => 'required',
             'estado' => 'required',
             'ultima_calibracion' => 'nullable|date',
-            'proxima_calibracion' => 'nullable|date|after_or_equal:ultima_calibracion',
+            'proxima_calibracion' => 'nullable|date',
+            'vida_util' => 'nullable|integer',
         ]);
         
         $equipo->update($validated);
         
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'equipo' => $equipo, 'message' => 'Equipo actualizado exitosamente']);
-        }
-        
-        return redirect()->route('equipos.show', $id)
+        return redirect()->route('equipos.index')
             ->with('success', 'Equipo actualizado exitosamente');
     }
 
-    // Destroy con soporte AJAX
     public function destroy($id)
     {
         $equipo = Equipo::findOrFail($id);
         $equipo->delete();
-        
-        if (request()->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Equipo eliminado exitosamente']);
-        }
         
         return redirect()->route('equipos.index')
             ->with('success', 'Equipo eliminado exitosamente');
@@ -174,8 +146,8 @@ class EquipoController extends Controller
     {
         $equipo = Equipo::findOrFail($id);
         
-        if ($equipo->costo && $equipo->vida_util) {
-            $anosTranscurridos = now()->diffInYears($equipo->fecha_adquisicion);
+        if ($equipo->costo && $equipo->vida_util && $equipo->fecha_compra) {
+            $anosTranscurridos = now()->diffInYears($equipo->fecha_compra);
             $depreciacionAnual = $equipo->costo / $equipo->vida_util;
             $depreciacionTotal = min($depreciacionAnual * $anosTranscurridos, $equipo->costo);
             

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Agenda de Mantenimiento')
+@section('title', ' / Agenda de Mantenimiento')
 @section('breadcrumb')
    
     <li class="breadcrumb-item active">Agenda de Mantenimiento</li>

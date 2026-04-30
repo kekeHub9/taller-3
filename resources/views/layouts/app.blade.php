@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioManage Sys - @yield('title')</title>
+    <title>LabCore - @yield('title')</title>
     
     <!-- pal diseño libreria importada de Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-hospital-alt me-2"></i>NeuroVida
+                <i class="fas fa-hospital-alt me-2"></i>NeuroVida - LabCore
             </a>
             
             <!-- menu pal usuario  -->
@@ -57,7 +57,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                <i class="fas fa-tachometer-alt me-2"></i> Inicio 
                             </a>
                         </li>
                         
@@ -111,7 +111,7 @@
               
                 <nav aria-label="breadcrumb" class="mb-4">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio </a></li>
                         @yield('breadcrumb')
                     </ol>
                 </nav>

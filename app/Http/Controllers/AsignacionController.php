@@ -50,6 +50,46 @@ class AsignacionController extends Controller
         
         return view('asignaciones.index', compact('asignaciones', 'estadisticas', 'departamentos'));
     }
+
+    // API para obtener detalles de una asignación
+public function getApiDetalles($id)
+{
+    $asignacion = Asignacion::with('equipo')->findOrFail($id);
+    
+    // Obtener historial del mismo equipo (últimas 5)
+    $historial = Asignacion::where('equipo_id', $asignacion->equipo_id)
+        ->where('id', '!=', $id)
+        ->orderBy('fecha_asignacion', 'desc')
+        ->limit(5)
+        ->get()
+        ->map(function($item) {
+            return [
+                'departamento' => $item->departamento,
+                'responsable' => $item->responsable,
+                'fecha_asignacion' => $item->fecha_asignacion?->format('Y-m-d'),
+                'estado' => $item->estado
+            ];
+        });
+    
+    return response()->json([
+        'id' => $asignacion->id,
+        'equipo' => [
+            'nombre' => $asignacion->equipo->nombre,
+            'numero_serie' => $asignacion->equipo->numero_serie,
+            'tipo' => $asignacion->equipo->tipo,
+            'estado' => $asignacion->equipo->estado
+        ],
+        'departamento' => $asignacion->departamento,
+        'responsable' => $asignacion->responsable,
+        'cargo' => $asignacion->cargo,
+        'fecha_asignacion' => $asignacion->fecha_asignacion?->format('Y-m-d'),
+        'fecha_devolucion' => $asignacion->fecha_devolucion?->format('Y-m-d'),
+        'estado' => $asignacion->estado,
+        'observaciones' => $asignacion->observaciones,
+        'dias_transcurridos' => $asignacion->dias_transcurridos,
+        'historial' => $historial
+    ]);
+}
     
     public function create()
     {
@@ -112,18 +152,21 @@ class AsignacionController extends Controller
      */
     public function devolver($id)
     {
-        $asignacion = Asignacion::findOrFail($id);
-        
-        if ($asignacion->estado != 'Activa') {
-            return back()->with('error', '❌ Esta asignación ya fue devuelta o está vencida');
+     $asignacion = Asignacion::findOrFail($id);
+    
+     // No permitir devolver si ya está devuelta
+     if ($asignacion->estado != 'Activa') {
+        return back()->with('error', '❌ Esta asignación ya fue devuelta');
         }
-        
+    
+     // Registrar la devolución (inmutable)
         $asignacion->update([
-            'fecha_devolucion' => now(),
-            'estado' => 'Devuelta'
-        ]);
-        
-        return back()->with('success', '✅ Equipo devuelto exitosamente');
+        'fecha_devolucion' => now(),
+        'estado' => 'Devuelta'
+     ]);
+    
+        // Ya no se puede modificar después de devuelta
+     return back()->with('success', '✅ Equipo devuelto exitosamente');
     }
     
     public function exportar(Request $request)

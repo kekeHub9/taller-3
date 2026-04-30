@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Equipos Biomédicos')
-@section('breadcrumb', 'Equipos')
+@section('breadcrumb', ' /Equipos')
 
 @push('head-scripts')
 <style>

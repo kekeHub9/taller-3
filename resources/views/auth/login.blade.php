@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioManage Sys - Login</title>
+    <title>LabCore - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -32,8 +32,8 @@
                         <!-- esta vaina es el logo, iconos importados de usa euu -->
                         <div class="text-center mb-4">
                             <i class="fas fa-hospital-alt hospital-icon"></i>
-                            <h2 class="mt-3">BioManage Sys</h2>
-                            <p class="text-muted">Clinica NeuroVida</p>
+                            <h2 class="mt-3">LabCore</h2>
+                            <p class="text-muted">Clinica Privada NeuroVida</p>
                         </div>
                         
                         <!-- Formulario del login -->
@@ -74,7 +74,7 @@
                             </div>
                             
                             <div class="text-center">
-                                <small class="text-muted">Tortura de programacion disque segura</small>
+                                <small class="text-muted">Sistema de seguimiento de mantenimiento para equipos médicos</small>
                             </div>
                         </form>
                         
@@ -91,7 +91,7 @@
                 </div>
                 
                 <div class="text-center mt-4 text-white">
-                    <small>&copy; 2025 NeuroVida - Sistema de Gestion Biomedica</small>
+                    <small>&copy; 2026 LabCore - Sistema de Gestion Biomedico</small>
                 </div>
             </div>
         </div>

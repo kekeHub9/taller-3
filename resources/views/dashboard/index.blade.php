@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'BioManage Sys')
+@section('title', 'LabCore')
 @section('breadcrumb')
 
 @push('head-scripts')

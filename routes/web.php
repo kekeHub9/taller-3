@@ -16,6 +16,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // RUTAS PROTEGIDAS (requieren autenticación)
 Route::middleware(['auth'])->group(function () {
 
+    Route::get('/api/asignaciones/{id}', [AsignacionController::class, 'getApiDetalles'])->name('api.asignacion.detalles');
     // pal deshboard
     Route::get('/api/dashboard-data', [DashboardController::class, 'apiData'])->name('api.dashboard');
     // Rutas API para equipos (AJAX)

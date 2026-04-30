@@ -1,8 +1,7 @@
 ﻿@extends('layouts.app')
 
-@section('title', ' / Agenda de Mantenimiento')
+@section('title', 'Agenda de Mantenimiento')
 @section('breadcrumb')
-   
     <li class="breadcrumb-item active">Agenda de Mantenimiento</li>
 @endsection
 
@@ -44,13 +43,10 @@
 @endpush
 
 @section('content')
-<!-- Asegurar que todas las variables existen, valida cada vaina -->
+<!-- Asegurar que todas las variables existen -->
 @php
-    // Variables de filtro (vienen del request)
     $fechaInicio = request('fecha_inicio', '');
     $fechaFin = request('fecha_fin', '');
-    
-    // Variables de datos (vienen del controlador)
     $mantenimientos = $mantenimientos ?? collect();
     $alertas = $alertas ?? [];
     $equipos = $equipos ?? collect();
@@ -240,7 +236,7 @@
     </div>
 </div>
 
-<!-- nuevo Mantenimiento -->
+<!-- Modal: Nuevo Mantenimiento (CORREGIDO) -->
 <div class="modal fade" id="nuevoMantenimientoModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -254,15 +250,11 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row">
+                        <!-- SELECT DE EQUIPOS - CORREGIDO -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Equipo *</label>
                             <select class="form-select" name="equipo_id" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <!-- son de ADORNO, NO FUNCIONAAAAN -->
-                                <option value="Preventivo">Grande</option>
-                                <option value="Correctivo">Largo</option>
-                                <option value="Calibración">Duro</option>
-                            </select>
+                                <option value="">Seleccionar equipo...</option>
                                 @foreach($equipos as $equipo)
                                 <option value="{{ $equipo->id }}">
                                     {{ $equipo->numero_serie ?? '' }} - {{ $equipo->nombre ?? 'N/A' }}
@@ -270,6 +262,8 @@
                                 @endforeach
                             </select>
                         </div>
+                        
+                        <!-- SELECT DE TIPO -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tipo de Mantenimiento *</label>
                             <select class="form-select" name="tipo" required>
@@ -330,7 +324,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    //calendario
+    // Calendario
     const calendarEl = document.getElementById('calendar');
     if (calendarEl) {
         const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -360,22 +354,11 @@ document.addEventListener('DOMContentLoaded', function() {
         calendar.render();
     }
     
+    // Filtros de fecha
     const fechaInicioInput = document.querySelector('input[name="fecha_inicio"]');
     const fechaFinInput = document.querySelector('input[name="fecha_fin"]');
     
-    if (fechaInicioInput && fechaFinInput && calendarEl) {
-        fechaInicioInput.addEventListener('change', function() {
-            calendar.gotoDate(this.value);
-        });
-        
-        fechaFinInput.addEventListener('change', function() {
-    
-            const endDate = new Date(this.value);
-            calendar.gotoDate(endDate);
-        });
-    }
-    
-    const tecnicos = ['Douglas Perez', 'Maira Lopez', 'Efrain Rodríguez', 'Laura Martinez', 'Gomez'];
+    // Lista de técnicos, es mas una sugerencia al momento de escribir (no aparecia ninguno aea)
     const tecnicoInput = document.querySelector('input[name="tecnico"]');
     
     if (tecnicoInput) {
@@ -392,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tecnicoInput.setAttribute('list', 'tecnicosList');
     }
     
+    // Confirmación para completar mantenimiento
     const completarForms = document.querySelectorAll('form[action*="completar"]');
     completarForms.forEach(form => {
         form.addEventListener('submit', function(e) {

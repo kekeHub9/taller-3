@@ -22,7 +22,7 @@ Route::middleware(['auth'])->group(function () {
     // Rutas API para equipos (AJAX)
     Route::get('/api/equipos', [EquipoController::class, 'getEquipos'])->name('api.equipos');
     Route::get('/api/equipos/{id}', [EquipoController::class, 'getEquipo'])->name('api.equipo');
-
+    Route::get('/mantenimientos/historial-equipo/{id}', [MantenimientoController::class, 'historialEquipo'])->name('mantenimientos.historial.equipo');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('equipos', EquipoController::class);

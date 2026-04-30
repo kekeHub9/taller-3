@@ -18,8 +18,9 @@ class MantenimientoController extends Controller
         $this->notificacionService = $notificacionService;
     }
     
-    //Agenda de mantenimientos
-    
+    /**
+     * Agenda de mantenimientos
+     */
     public function agenda(Request $request)
     {
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
@@ -41,37 +42,81 @@ class MantenimientoController extends Controller
         return view('mantenimientos.agenda', compact('mantenimientos', 'equipos', 'fechaInicio', 'fechaFin', 'alertas'));
     }
     
-    
-      //Registro de incidencias
-
+    /**
+     * Registro/Historial de mantenimientos (MODIFICADO - muestra TODOS los mantenimientos)
+     */
     public function registro(Request $request)
     {
-        $query = Mantenimiento::with('equipo')
-            ->where('tipo', 'Correctivo');
-            
+        // Cambio: mostrar TODOS los mantenimientos, no solo correctivos
+        $query = Mantenimiento::with('equipo');
+        
+        // Filtros
         if ($request->filled('equipo_id')) {
             $query->where('equipo_id', $request->equipo_id);
         }
         
-        if ($request->filled('mes')) {
-            $query->whereMonth('fecha_realizacion', $request->mes);
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
         }
         
-        $incidencias = $query->orderBy('fecha_realizacion', 'desc')->paginate(15);
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+        
+        $mantenimientos = $query->orderBy('fecha_programada', 'desc')->paginate(15);
         $equipos = Equipo::all();
         
-        // Calculo de estadísticas
+        // Estadísticas generales mejoradas
         $estadisticas = [
-            'total_incidencias' => $incidencias->total(),
-            'costo_total' => $incidencias->sum('costo'),
-            'tiempo_total' => $incidencias->sum('tiempo_inactivo'),
-            'promedio_reparacion' => $incidencias->avg('tiempo_inactivo') ?? 0
+            'total_registros' => Mantenimiento::count(),
+            'total_incidencias' => Mantenimiento::where('tipo', 'Correctivo')->count(),
+            'costo_total' => Mantenimiento::sum('costo') ?? 0,
+            'tiempo_total' => Mantenimiento::sum('tiempo_inactivo') ?? 0,
+            'pendientes' => Mantenimiento::where('estado', 'Pendiente')->count(),
+            'completados' => Mantenimiento::where('estado', 'Completado')->count(),
+            'promedio_reparacion' => Mantenimiento::where('tipo', 'Correctivo')->avg('tiempo_inactivo') ?? 0
         ];
         
-        return view('mantenimientos.registro', compact('incidencias', 'equipos', 'estadisticas'));
+        return view('mantenimientos.registro', compact('mantenimientos', 'equipos', 'estadisticas'));
     }
     
-    /*Guardar nuevo mantenimiento */
+    /**
+     * NUEVO MÉTODO: Obtener historial completo de un equipo (para el modal)
+     */
+    public function historialEquipo($id)
+    {
+        $equipo = Equipo::with(['mantenimientos' => function($query) {
+            $query->orderBy('fecha_programada', 'desc');
+        }])->findOrFail($id);
+        
+        $historial = $equipo->mantenimientos->map(function($mant) {
+            return [
+                'id' => $mant->id,
+                'tipo' => $mant->tipo,
+                'estado' => $mant->estado,
+                'fecha_programada' => $mant->fecha_programada ? Carbon::parse($mant->fecha_programada)->format('d/m/Y') : 'N/A',
+                'fecha_realizacion' => $mant->fecha_realizacion ? Carbon::parse($mant->fecha_realizacion)->format('d/m/Y') : 'Pendiente',
+                'tecnico' => $mant->tecnico ?? 'No asignado',
+                'descripcion' => $mant->descripcion ?? 'Sin descripción',
+                'solucion' => $mant->solucion ?? 'No registrada',
+                'costo' => number_format($mant->costo ?? 0, 2),
+                'tiempo_inactivo' => $mant->tiempo_inactivo ?? 0,
+            ];
+        });
+        
+        return response()->json([
+            'equipo' => [
+                'nombre' => $equipo->nombre,
+                'numero_serie' => $equipo->numero_serie ?? 'N/A',
+                'modelo' => $equipo->modelo ?? 'N/A'
+            ],
+            'historial' => $historial
+        ]);
+    }
+    
+    /**
+     * Guardar nuevo mantenimiento
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -98,6 +143,9 @@ class MantenimientoController extends Controller
             ->with('success', 'Mantenimiento programado exitosamente');
     }
     
+    /**
+     * Actualizar mantenimiento
+     */
     public function update(Request $request, $id)
     {
         $mantenimiento = Mantenimiento::findOrFail($id);
@@ -130,7 +178,9 @@ class MantenimientoController extends Controller
             ->with('success', 'Mantenimiento actualizado exitosamente');
     }
     
-  
+    /**
+     * Eliminar mantenimiento
+     */
     public function destroy($id)
     {
         $mantenimiento = Mantenimiento::findOrFail($id);
@@ -146,7 +196,9 @@ class MantenimientoController extends Controller
             ->with('success', 'Mantenimiento eliminado exitosamente');
     }
     
-    
+    /**
+     * Completar mantenimiento rápidamente
+     */
     public function completar($id)
     {
         $mantenimiento = Mantenimiento::findOrFail($id);
@@ -162,26 +214,28 @@ class MantenimientoController extends Controller
         return back()->with('success', 'Mantenimiento marcado como completado');
     }
     
-    
+    /**
+     * API para el calendario
+     */
     public function apiCalendario(Request $request)
     {
+        $start = $request->input('start', now()->startOfMonth());
+        $end = $request->input('end', now()->endOfMonth());
+        
         $mantenimientos = Mantenimiento::with('equipo')
-            ->whereBetween('fecha_programada', [
-                $request->input('start', now()->startOfMonth()),
-                $request->input('end', now()->endOfMonth())
-            ])
+            ->whereBetween('fecha_programada', [$start, $end])
             ->get()
             ->map(function($mant) {
                 return [
                     'id' => $mant->id,
-                    'title' => $mant->equipo->nombre . ' - ' . $mant->tipo,
+                    'title' => ($mant->equipo->nombre ?? 'Equipo') . ' - ' . $mant->tipo,
                     'start' => $mant->fecha_programada,
                     'end' => $mant->fecha_programada,
                     'color' => $this->getColorByEstado($mant->estado),
                     'extendedProps' => [
                         'tecnico' => $mant->tecnico,
                         'estado' => $mant->estado,
-                        'equipo' => $mant->equipo->numero_serie
+                        'equipo' => $mant->equipo->numero_serie ?? ''
                     ]
                 ];
             });
@@ -189,14 +243,69 @@ class MantenimientoController extends Controller
         return response()->json($mantenimientos);
     }
     
+    /**
+     * Exportar reporte (NUEVO MÉTODO)
+     */
+    public function exportarReporte(Request $request)
+    {
+        $query = Mantenimiento::with('equipo');
+        
+        if ($request->filled('equipo_id')) {
+            $query->where('equipo_id', $request->equipo_id);
+        }
+        
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
+        
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+        
+        $mantenimientos = $query->orderBy('fecha_programada', 'desc')->get();
+        
+        // Exportar a CSV
+        $filename = 'reporte_mantenimientos_' . Carbon::now()->format('Ymd_His') . '.csv';
+        $handle = fopen('php://temp', 'w');
+        
+        // Cabeceras
+        fputcsv($handle, ['Equipo', 'Tipo', 'Estado', 'Fecha Programada', 'Fecha Realización', 'Técnico', 'Costo', 'Tiempo Inactivo', 'Descripción']);
+        
+        // Datos
+        foreach ($mantenimientos as $mant) {
+            fputcsv($handle, [
+                $mant->equipo->nombre ?? 'N/A',
+                $mant->tipo,
+                $mant->estado,
+                $mant->fecha_programada ? Carbon::parse($mant->fecha_programada)->format('d/m/Y') : 'N/A',
+                $mant->fecha_realizacion ? Carbon::parse($mant->fecha_realizacion)->format('d/m/Y') : 'Pendiente',
+                $mant->tecnico ?? 'N/A',
+                $mant->costo ?? 0,
+                $mant->tiempo_inactivo ?? 0,
+                $mant->descripcion ?? ''
+            ]);
+        }
+        
+        rewind($handle);
+        $csvContent = stream_get_contents($handle);
+        fclose($handle);
+        
+        return response($csvContent, 200)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+    
+    /**
+     * Obtener color según estado para el calendario
+     */
     private function getColorByEstado($estado)
     {
         return match($estado) {
-            'Pendiente' => '#ffc107', // Amarillo
-            'En proceso' => '#0dcaf0', // Azul claro
-            'Completado' => '#198754', // Verde
-            'Cancelado' => '#6c757d', // Gris
-            default => '#0d6efd'
+            'Pendiente' => '#ffc107',     // Amarillo
+            'En proceso' => '#0dcaf0',    // Azul claro
+            'Completado' => '#198754',    // Verde
+            'Cancelado' => '#6c757d',     // Gris
+            default => '#0d6efd'          // Azul
         };
     }
 }

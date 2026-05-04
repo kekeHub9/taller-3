@@ -91,19 +91,6 @@
                             </a>
                         </li>
                     </ul>
-                    
-                    <!-- filtro por departamentos (aun no funciona) -->
-                    <div class="mt-4 p-3 bg-white border rounded">
-                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-1">
-                            <span>Filtrar por Departamento</span>
-                        </h6>
-                        <select class="form-select form-select-sm" id="filter-departamento">
-                            <option value="">Todos</option>
-                            <option value="UCI">UCI</option>
-                            <option value="laboratorio">Laboratorio</option>
-                            <option value="cardiologia">Cardiologia</option>
-                        </select>
-                    </div>
                 </div>
             </nav>
 

@@ -24,9 +24,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/equipos/{id}', [EquipoController::class, 'getEquipo'])->name('api.equipo');
     Route::get('/mantenimientos/historial-equipo/{id}', [MantenimientoController::class, 'historialEquipo'])->name('mantenimientos.historial.equipo');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-  
+
     Route::get('/reportes/estado-equipos', [ReporteController::class, 'estadoEquipos'])->name('reportes.estado-equipos');
-    Route::get('/', [ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
   
     Route::resource('equipos', EquipoController::class);
     

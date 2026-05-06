@@ -27,7 +27,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reportes/estado-equipos', [ReporteController::class, 'estadoEquipos'])->name('reportes.estado-equipos');
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-  
+  //ultimo error y comit con push
     Route::resource('equipos', EquipoController::class);
     
     Route::prefix('asignaciones')->group(function () {
